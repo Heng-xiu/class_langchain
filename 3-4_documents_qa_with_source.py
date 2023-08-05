@@ -3,6 +3,7 @@ from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import UnstructuredURLLoader, SeleniumURLLoader
 from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
 #--------------------------------------------------------
 # Step1: 環境設定
@@ -31,6 +32,7 @@ docs = loader.load()
 # Step3: 建立LLMChain
 llm = ChatOpenAI(temperature=0)
 chain = load_qa_chain(llm=llm)  # , chain_type="stuff"
+#chain = load_qa_with_sources_chain(llm=llm, chain_type="stuff")   # chain_type="stuff"
 
 #---------------------------------------
 # Step4: 問答
