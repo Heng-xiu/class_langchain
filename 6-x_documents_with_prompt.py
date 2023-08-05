@@ -1,9 +1,17 @@
 import config
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+
 from langchain.document_loaders import UnstructuredURLLoader, SeleniumURLLoader
 from langchain.chains.question_answering import load_qa_chain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.vectorstores import Chroma
+from langchain.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
 
 #--------------------------------------------------------
 # Step1: 環境設定
@@ -16,8 +24,7 @@ config.config_env()
 url1 = 'https://www.books.com.tw/web/sys_qalist/qa_36_87'   # 博客來的退貨規定
 url2 = 'https://www.books.com.tw/web/sys_qalist/qa_36_40/'  # 博客來的換貨規定
 url3 = 'https://www.books.com.tw/web/sys_qacontent/qa_36_43'  # 博客來的維修與保固
-
-urls = [url1, url2, url3]   # 使用此
+urls = [url1, url2, url3]   # 更多文建會遇到Token不足的問題, 下一章節將介紹文件分割
 
 loader = UnstructuredURLLoader(urls, continue_on_failure=False)  # 方法1: 需安裝python-magic-bin, urls一定要是陣列
 #loader = SeleniumURLLoader(urls, continue_on_failure=False)     # 方法2: 需安裝selenium, urls一定要是陣列,
@@ -28,37 +35,44 @@ docs = loader.load()
 #   UnstructuredURLLoader 若出現以下錯誤, ValueError: Invalid file. The FileType.UNK file type is not supported in partition.
 #   請安裝 pip install python-magic-bin
 
-text_splitter = RecursiveCharacterTextSplitter(
-    # Set a really small chunk size
-    chunk_size=2048, #4096,  # 全
-    chunk_overlap=200,
-    length_function=len,
-)
-
-docs_splitter = text_splitter.split_documents(docs)
-
-print(f'原本文件數量: {len(docs)}')
-print(f'切割後文件數量: {len(docs_splitter)}' )
+#-------------------------------------
+# Step3: 儲存至Vector DataBase (儲存到硬碟)
+#    需 pip install chromadb
+llm_embedding = OpenAIEmbeddings()
+db = Chroma.from_documents(docs, llm_embedding)
 
 #---------------------------------------
-# Step3: 建立LLMChain
-model_name = "gpt-3.5-turbo-16k-0613"
+# Step4: 建立LLMChain
+model_name = "gpt-3.5-turbo-16k"
 llm = ChatOpenAI(temperature=0, model=model_name)
-chain = load_qa_chain(llm=llm, chain_type="map_reduce")  # "map_reduce" need pip install tiktoken
+
+
+system_prompt_template = """
+使用以下內容回答使用者問題, 若不知道請回答不知道
+用英文回答
+----------------
+{summaries}
+"""
+human_prompt_template = "{question}"
+
+# 說明: 一定要有summaries和question這兩個關鍵字,
+
+system_message_prompt = SystemMessagePromptTemplate.from_template(system_prompt_template)
+human_message_prompt = HumanMessagePromptTemplate.from_template(human_prompt_template)
+prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+
+chain = load_qa_with_sources_chain(llm=llm, chain_type_kwargs={"prompt": prompt})   # chain_type="stuff"
 
 #---------------------------------------
-# Step4: 問答
-query1 = "商品保固如何處理?"
-response1 = chain.run(input_documents=docs, question=query1)
-#qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever(), return_source_documents=True)
+# Step5: 搜尋與回答
+query1 = "博客來的退貨規定?"
+docs_search = db.similarity_search(query1, k=1)
+response1 = chain.run(input_documents=docs_search, question=query1)
 print(response1)
 print('========================')
 
-
-query2 = "如何換貨?"
-response2 = chain.run(input_documents=docs_splitter, question=query2)
-print(response2)
-print('========================')
+print(f'原本的文件數: {len(docs)}')
+print(f'搜尋到的文件數: {len(docs_search)}')
 
 
 
@@ -78,3 +92,5 @@ print('========================')
 
 
 #---------------------------------------
+
+

@@ -1,9 +1,11 @@
 import config
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+
 from langchain.document_loaders import UnstructuredURLLoader, SeleniumURLLoader
 from langchain.chains.question_answering import load_qa_chain
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.vectorstores import Chroma
 
 #--------------------------------------------------------
 # Step1: 環境設定
@@ -16,8 +18,7 @@ config.config_env()
 url1 = 'https://www.books.com.tw/web/sys_qalist/qa_36_87'   # 博客來的退貨規定
 url2 = 'https://www.books.com.tw/web/sys_qalist/qa_36_40/'  # 博客來的換貨規定
 url3 = 'https://www.books.com.tw/web/sys_qacontent/qa_36_43'  # 博客來的維修與保固
-urls = [url3]
-#urls = [url1, url2, url3]   # 更多文建會遇到Token不足的問題, 下一章節將介紹文件分割
+urls = [url1, url2, url3]   # 更多文建會遇到Token不足的問題, 下一章節將介紹文件分割
 
 loader = UnstructuredURLLoader(urls, continue_on_failure=False)  # 方法1: 需安裝python-magic-bin, urls一定要是陣列
 #loader = SeleniumURLLoader(urls, continue_on_failure=False)     # 方法2: 需安裝selenium, urls一定要是陣列,
@@ -28,44 +29,36 @@ docs = loader.load()
 #   UnstructuredURLLoader 若出現以下錯誤, ValueError: Invalid file. The FileType.UNK file type is not supported in partition.
 #   請安裝 pip install python-magic-bin
 
-#---------------------------------------
-# Step3: 建立LLMChain
-llm = ChatOpenAI(temperature=0)
-chain = load_qa_chain(llm=llm)  # , chain_type="stuff"
-#chain = load_qa_with_sources_chain(llm=llm, chain_type="stuff")   # chain_type="stuff"
+#-------------------------------------
+# Step3: 儲存至Vector DataBase (儲存到硬碟)
+#    需 pip install chromadb
+llm_embedding = OpenAIEmbeddings()
+db = Chroma.from_documents(docs, llm_embedding)
 
 #---------------------------------------
-# Step4: 問答
-query1 = "商品保固如何處理?"
-response1 = chain.run(input_documents=docs, question=query1)
+# Step4: 建立LLMChain
+model_name = "gpt-3.5-turbo-16k"
+llm = ChatOpenAI(temperature=0, model=model_name)
+chain = load_qa_chain(llm=llm)  # , chain_type="stuff"
+
+
+#---------------------------------------
+# Step5: 搜尋與回答
+query1 = "博客來的退貨規定?"
+docs_search = db.similarity_search(query1, k=1)
+response1 = chain.run(input_documents=docs_search, question=query1)
 print(response1)
 print('========================')
 
-
-query2 = "如何換貨?"
-response2 = chain.run(input_documents=docs, question=query2)
-print(response2)
-print('========================')
-
-query3 = "介紹一下王淳恆簡歷?"
-response3 = chain.run(input_documents=docs, question=query3)
-print(response3)
-print('========================')
+print(f'原本的文件數: {len(docs)}')
+print(f'搜尋到的文件數: {len(docs_search)}')
 
 
-#-------------------------------------
-
-
-# 註解2:
-#   若出現 openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens. However, your messages resulted in 8116 tokens. Please reduce the length of the messages.
-#   表示文件所需的token太大
-#     1. 將文件分割, 下一個章節會介紹
-#     2. 使用token較大的LLM, 例如gpt-3.5-turbo-16k
 
 #---------------------------------------
 # 參考資料
-# 1. https://python.langchain.com/docs/integrations/document_loaders/url
-# 2. https://python.langchain.com/docs/use_cases/question_answering/how_to/question_answering
+# 1. https://python.langchain.com/docs/integrations/vectorstores/chroma
+
 
 
 #---------------------------------------

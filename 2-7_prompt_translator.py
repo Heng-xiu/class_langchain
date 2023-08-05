@@ -19,14 +19,13 @@ config.config_env()
 #   human_message_prompt: 使用者的提問
 #
 system_prompt_template = "請將{input_language}翻譯成{output_language}."
-system_message_prompt = SystemMessagePromptTemplate.from_template(system_prompt_template)
-
 human_prompt_template = "{text}"
-human_message_prompt = HumanMessagePromptTemplate.from_template(human_prompt_template)
 
-llm = ChatOpenAI(temperature=0)
+system_message_prompt = SystemMessagePromptTemplate.from_template(system_prompt_template)
+human_message_prompt = HumanMessagePromptTemplate.from_template(human_prompt_template)
 prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
 
+llm = ChatOpenAI(temperature=0)
 llm_chain = LLMChain(
     llm=llm,
     prompt= prompt
