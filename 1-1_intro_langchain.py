@@ -5,16 +5,17 @@ from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI
 
 #--------------------------------------------------------
-# Step1: 環境設定
-load_dotenv()  # take environment variables from .env, replit不需要
-os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+# Step1: 環境設定 (若使用.env本地環境)
+#load_dotenv()
+#os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+config.config_env()
+
 
 #--------------------------------------------------------
 # Step2: 簡單對話 (常識)
 chat_model = ChatOpenAI()
 response = chat_model.predict("台積電股票代碼多少?")
 print(response)
-
 
 
 

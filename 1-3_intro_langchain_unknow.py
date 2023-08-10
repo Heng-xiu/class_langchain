@@ -1,10 +1,8 @@
-# 設定 OPENAI_API_KEY 在 .env(本地環境) or Secrets(replit)
-
 import config
 from langchain.chat_models import ChatOpenAI
 
 #--------------------------------------------------------
-# Step1: 環境設定
+# Step1: 環境設定 (若使用.env本地環境)
 config.config_env()
 
 

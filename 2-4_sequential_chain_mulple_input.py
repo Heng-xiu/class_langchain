@@ -1,6 +1,3 @@
-# 參考資料
-#   https://python.langchain.com/docs/modules/chains/foundational/sequential_chains
-
 import config
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -8,7 +5,7 @@ from langchain.chains import SequentialChain
 
 
 #--------------------------------------------------------
-# Step1: 環境設定
+# Step1: 環境設定 (若使用.env本地環境)
 config.config_env()
 
 #---------------------------------------
@@ -49,6 +46,7 @@ print(response_1['chapter'])
 #--------------------------------------------------------
 # 參考資料
 # 1. https://python.langchain.com/docs/modules/chains/foundational/llm_chain
+# 2. https://python.langchain.com/docs/modules/chains/foundational/sequential_chains
 
 #--------------------------------------------------------
 # 應用:

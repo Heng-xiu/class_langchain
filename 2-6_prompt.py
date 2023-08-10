@@ -3,7 +3,7 @@ from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
 
 #--------------------------------------------------------
-# Step1: 環境設定
+# Step1: 環境設定 (若使用.env本地環境)
 config.config_env()
 
 #---------------------------------------

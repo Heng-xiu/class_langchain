@@ -9,7 +9,7 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.vectorstores import Chroma
 
 #--------------------------------------------------------
-# Step1: 環境設定
+# Step1: 環境設定 (若使用.env本地環境)
 config.config_env()
 
 

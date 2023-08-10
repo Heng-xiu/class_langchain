@@ -1,9 +1,12 @@
 pandas==2.0.3
 python-dotenv==1.0.0
-langchain==0.0.251
+langchain==0.0.244
 openai==0.27.8
-unstructured==0.9.0
-python-magic-bin==0.4.14
+unstructured==0.8.4
+#python-magic-bin==0.4.14   # for windows
 selenium==4.11.2
 tiktoken==0.4.0
 chromadb==0.4.5
+wikipedia==1.4.1
+duckduckgo-search==3.8.4
+beautifulsoup4==4.12.2

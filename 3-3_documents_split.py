@@ -6,7 +6,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 #--------------------------------------------------------
-# Step1: 環境設定
+# Step1: 環境設定 (若使用.env本地環境)
 config.config_env()
 
 
