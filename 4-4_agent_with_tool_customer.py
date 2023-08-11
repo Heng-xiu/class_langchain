@@ -11,26 +11,29 @@ config.config_env()
 
 #---------------------------------------
 # Step2: 建立LLMChain
-llm = ChatOpenAI(temperature=0)
+model_name = "gpt-3.5-turbo-16k"
+llm = ChatOpenAI(temperature=0, model=model_name)
 
 #---------------------------------------
 # Step3: 建立自己的工具
 #
-# ACS的Yahoo拍賣
-#    https://tw.mall.yahoo.com/store/ACS%20%E8%B7%A8%E9%81%8B%E5%8B%95:pump306
-#
-class ACSSearchTool(BaseTool):
-    name = "ACS產品搜尋工具"
-    description = "ACS是一家運動鞋電商, 可尋找各廠牌各式的鞋子, 請用中文搜尋"   # 越精準越好
+class BooksSearchTool(BaseTool):
+    name = "博客來搜尋工具"
+    description = "博客來是一家電商, 可以搜尋書籍及日常用品等"  # 越精準越好
 
     def _run(self, query):
-        print(f'[ACSSearchTool (debug)] 搜尋關鍵字: {query}')
-        url = f'https://tw.mall.yahoo.com/search?m=search&sid=pump306&q={query}&search_type=product_name'
+        print(f'[BooksSearchTool (debug)] 搜尋關鍵字: {query}')
+        url = f'https://search.books.com.tw/search/query/key/{query}'
         urls = [url]
-        # loader = UnstructuredURLLoader(urls=urls, continue_on_failure=False)
-        loader = SeleniumURLLoader(urls, continue_on_failure=False)
+        loader = UnstructuredURLLoader(urls=urls, continue_on_failure=False)
+        # loader = SeleniumURLLoader(urls, continue_on_failure=False)
         documents = loader.load()
-        return documents[0].page_content[:2400]  # model token limit!
+
+        if len(documents[0].page_content)>4096:
+            return documents[0].page_content[:4096]
+        else:
+            return documents[0].page_content
+
 
     def _arun(self):
         raise NotImplementedError("This tool does not support async")
@@ -39,14 +42,14 @@ class ACSSearchTool(BaseTool):
 
 #--------------------------------------------------------
 # Step4: Agent結合工具
-tools = [ACSSearchTool()]
+tools = [BooksSearchTool()]
 
 agent = initialize_agent(
             tools=tools,
             llm=llm,
             verbose=True)
 
-result = agent.run("請推薦五雙白鞋")
+result = agent.run("請推薦五本關於python的書籍")
 print('==================================')
 print(result)
 
