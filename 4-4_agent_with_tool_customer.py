@@ -25,8 +25,10 @@ class BooksSearchTool(BaseTool):
         print(f'[BooksSearchTool (debug)] 搜尋關鍵字: {query}')
         url = f'https://search.books.com.tw/search/query/key/{query}'
         urls = [url]
-        loader = UnstructuredURLLoader(urls=urls, continue_on_failure=False)
-        # loader = SeleniumURLLoader(urls, continue_on_failure=False)
+        #loader = UnstructuredURLLoader(urls=urls, continue_on_failure=False)
+        loader = SeleniumURLLoader(urls, continue_on_failure=False)
+        # 若有出現 codespace Selenium selenium.common.exceptions.WebDriverException: Message: unknown error: session deleted because of page crash 錯誤
+        # > sudo mount -t tmpfs -o rw,nosuid,nodev,noexec,relatime,size=512M tmpfs /dev/shm
         documents = loader.load()
 
         if len(documents[0].page_content)>4096:
